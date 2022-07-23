@@ -2,6 +2,7 @@ from transformer import Transformer
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from mpl_toolkits.mplot3d import axes3d
 
 import numpy as np
 
