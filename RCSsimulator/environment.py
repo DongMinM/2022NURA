@@ -1,35 +1,39 @@
+from cmath import nan
 import numpy as np
 from transformer import Transformer
+import random
+import time
 
 class Environment:
   def __init__ (self):
+    np.random.seed(2)
     # gravity
     self.g     = np.array([9.81,0,0])                # m / s^2
-    self.wind  = np.array([0,0,0])
-
+    # self.wind  = np.around(np.random.randn(3),3)
+    self.wind = np.array([0,0,0])
+    self.Cw = 1
   # Kinematics
   def free_fall(self,rocket,dt):
 
         ''' Set Parameters'''
         # Thrust
-        T = rocket.status.thrust
-        # position and velocity
+        T = np.linalg.norm(rocket.status.thrust)
+        # position and velocity about ground
         p_v = np.append(rocket.status.position,rocket.status.velocity)
-        # anguler and angulerVelocity
-        a_w = np.append(rocket.status.angle,rocket.status.angulerVelocity)
+
         # mass
         m = rocket.status.structureMass + rocket.status.propellantMass
-
+        head = rocket.status.head
+        theta = rocket.status.theta
+        phi   = rocket.status.phi
         # inertia
-        I = 0.5*m*rocket.status.length**2
-        # mass center to aero center
-        mc2ac = np.array([rocket.status.aeroCenter - rocket.status.massCenter,0,0])
-        # mass center to rocket bottom
-        mc2bottom = np.array([-rocket.status.massCenter,0,0])
+        I = np.around(0.5*m*rocket.status.length**2,5)
+
         # drag coefficient
         Cd = rocket.status.dragCoeff
         # cross section
         S = np.pi*rocket.status.diameter**2/4
+        
         # rho
         if p_v[2] <= 35000:
             rho = 1.225*(1-1.8e-5*p_v[2])**5.656                                  ## calculate atmospheric density
@@ -45,22 +49,11 @@ class Environment:
             |Vz|      |0, 0, 0, 0, 0, 1 ||Vz|     |0,         0,          dt|                                 
             p_v = A@p_v + B@a
 
-            |roll  |      |1, 0, 0, dt ,0 ,0||roll  |     |0.5*dt**2, 0,           0|
-            |pitch |      |0, 1, 0, 0, dt ,0||pitch |     |0,         0.5*dt**2,   0||Wax|
-            |yaw   |  =   |0, 0, 1, 0, 0, dt||yaw   |  +  |0,         0,   0.5*dt**2||Way|
-            |Wx    |      |0, 0, 0, 1 ,0 ,0 ||Wx    |     |dt,        0,           0||Waz|
-            |Wy    |      |0, 0, 0, 0, 1 ,0 ||Wy    |     |0,         dt,          0|
-            |Wz    |      |0, 0, 0, 0, 0, 1 ||Wz    |     |0,         0,          dt|
-            a_w = A@a_w + B2@wa                                                               '''
+        '''
+        
+
 
         A = np.array([[1, 0, 0, dt ,0 ,0],
-                      [0, 1, 0, 0, dt ,0],
-                      [0, 0, 1, 0, 0, dt],
-                      [0, 0, 0, 1 ,0 ,0],
-                      [0, 0, 0, 0, 1 ,0],
-                      [0, 0, 0, 0, 0, 1]])
-
-        A2 = np.array([[1, 0, 0, dt ,0 ,0],
                       [0, 1, 0, 0, dt ,0],
                       [0, 0, 1, 0, 0, dt],
                       [0, 0, 0, 1 ,0 ,0],
@@ -74,34 +67,34 @@ class Environment:
                       [0,         dt,        0],
                       [0,         0,         dt]])
 
-        B2 = np.array([[0.5*dt**2,         0, 0],
-                       [0,         0.5*dt**2, 0],
-                       [0,         0, 0.5*dt**2],
-                       [dt,        0,         0],
-                       [0,         dt,        0],
-                       [0,         0,         dt]])
-
         # Calculate thrust and transform thrust
-        M = Transformer().body_to_earth(a_w[0:3])
-        N = np.array([0,10,0])
-        T = T
-        T = np.array(M@T)        
-        torqe_T = np.around(np.cross(M@mc2bottom,T),10)
+        T = Transformer().spherical_to_earth(T,theta,phi)
+
         # Calculate drag and transform drag
         D = -0.5*rho*S*Cd*np.linalg.norm(p_v[3:6])*np.array(p_v[3:6])
-
         
-        torqe_D = np.cross(M@mc2ac,D)
-
+        # Total force at aerocenter
+        total_force_at_ac = D
 
         # Calculate total acceleration
-        total_accel = (T+D)/m -self.g
+        total_accel = (T+D)/m-self.g
+
+        # State-space equation : Translation
         p_v = A@p_v + B@total_accel
 
-        # Calculate total moment 
-        total_anguler_accel = (torqe_T+torqe_D)/I
+        # Rotation equation
+        if not np.array_equal(D,np.array([0,0,0])):
 
-        a_w = A2@a_w + B2@total_anguler_accel
+            aoa_normal = np.cross(-1*head,total_force_at_ac)
+            aoa_normal = aoa_normal
+            rocket.normal = aoa_normal
+
+            total_anguler_accel = np.linalg.norm((total_force_at_ac))*0.15/I  # 방향에 따른 I도 만들어줘야할듯?
+
+            rot_angle = total_anguler_accel*dt
+
+            next_head = Transformer().quaternions_rotation(aoa_normal,rot_angle,head)
+            rocket.status.head             = next_head
 
 
         if rocket.timeFlow <= 3:
@@ -112,10 +105,9 @@ class Environment:
         rocket.status.velocity         = p_v[3:6]
         rocket.status.acceleration     = total_accel
 
-        rocket.status.angle            = a_w[0:3]
-        rocket.status.angulerVelocity  = a_w[3:6]
-
-        rocket.totalDrag        = D
+        rocket.totalDrag          = D
+        rocket.status.phi         = np.array([np.arctan2(rocket.status.head[1],rocket.status.head[0])])
+        rocket.status.theta       = np.array([90*np.pi/180-rocket.status.head[2]/np.linalg.norm(rocket.status.head)])
 
 
         

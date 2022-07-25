@@ -9,6 +9,7 @@ class Rocket:
     self.timeFlow = 0
     self.landingTime = 0
     self.totalDrag = np.array([0,0,0])
+    self.normal    = np.array([0,0,0])
 
     # Saved datas (for Visualization)
     self.positionlist = np.array([self.status.position])
@@ -20,11 +21,15 @@ class Rocket:
     self.massCenterlist      = np.array([self.status.massCenter])
     self.thrustlist          = np.array([self.status.thrust])
     self.totalDraglist       = np.array([self.totalDrag])
+    self.thetalist           = np.array([self.status.theta])
+    self.philist             = np.array([self.status.phi])
+    self.headlist            = np.array([self.status.head])
     self.timeFlowList            = np.array([0])
+    self.normallist    = np.array([[0,0,0]])
 
   # rocket launcher (in environment)
   def launch(self,environment,timestep = 0.001, simTime = 20):
-
+    self.windlist = np.array([environment.wind])
     print('======start simulation======')
     time.sleep(1)
 
@@ -52,6 +57,7 @@ class Rocket:
 
       # Save datas for Visualization
       self.saveDatas()
+      self.windlist = np.append(self.windlist,np.array([environment.wind]),axis=0)
 
       # Progress
       if self.timeFlow%2 == 0:
@@ -71,4 +77,8 @@ class Rocket:
     self.massCenterlist      = np.append(self.massCenterlist,np.array([self.status.massCenter]),axis=0)
     self.thrustlist          = np.append(self.thrustlist,np.array([self.status.thrust]),axis=0)
     self.totalDraglist       = np.append(self.totalDraglist,np.array([self.totalDrag]),axis = 0)
+    self.thetalist           = np.append(self.thetalist,np.array([self.status.theta]),axis=0)
+    self.philist             = np.append(self.philist,np.array([self.status.phi]),axis=0)
+    self.headlist            = np.append(self.headlist,np.array([self.status.head]),axis=0)
     self.timeFlowList        = np.append(self.timeFlowList,np.array([self.timeFlow]),axis=0)
+    self.normallist              = np.append(self.normallist,np.array([self.normal]),axis=0)

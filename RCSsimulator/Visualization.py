@@ -4,16 +4,17 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from mpl_toolkits.mplot3d import axes3d
 
+
 import numpy as np
 
 class Visualizer:
     def __init__ (self,rocket,simTime,timestep,witch,scale=100):
         print('======Wait for Visualization======')
+        self.set_variables(rocket)
 
         if witch == '3d':
             self.animation(rocket,simTime,timestep,scale)
         else:
-            self.set_variables(rocket)
             self.set_visualmodel(witch,simTime,timestep)
             self.visualization_start(witch)
 
@@ -43,10 +44,22 @@ class Visualizer:
 
         self.mass = rocket.masslist
         self.thrust = rocket.thrustlist[:,0]
+
+        self.dragx  = rocket.totalDraglist[:,1]
+        self.dragy  = rocket.totalDraglist[:,2]
+        self.dragz  = rocket.totalDraglist[:,0]
+
         self.drag   = np.empty(len(rocket.totalDraglist))
         for i in range(len(rocket.totalDraglist)):
             self.drag[i] = np.linalg.norm(rocket.totalDraglist[i])
         self.time = rocket.timeFlowList
+
+        self.windx = rocket.windlist[:,1]
+        self.windy = rocket.windlist[:,2]
+        self.windz = rocket.windlist[:,0]
+        self.wind   = np.empty(len(rocket.windlist))
+        for i in range(len(rocket.windlist)):
+            self.drag[i] = np.linalg.norm(rocket.windlist[i])
 
         self.landingTime = rocket.landingTime
 
@@ -170,10 +183,38 @@ class Visualizer:
             self.ax[i].set_ylabel(r'thrust $[N]$',fontsize=10)
             self.ax[i].set_ylim(-3,max(self.thrust)*1.1)
             self.ax[i].plot(self.time,self.thrust)
+        elif witch == 'Dragx':
+            self.ax[i].set_ylabel(r'drag $[N]$',fontsize=10)
+            self.ax[i].set_ylim(min(self.dragx)-3,max(self.dragx)*1.1)
+            self.ax[i].plot(self.time,self.dragx)
+        elif witch == 'Dragy':
+            self.ax[i].set_ylabel(r'drag $[N]$',fontsize=10)
+            self.ax[i].set_ylim(min(self.dragy)-3,max(self.dragy)*1.1)
+            self.ax[i].plot(self.time,self.dragy)
+        elif witch == 'Dragz':
+            self.ax[i].set_ylabel(r'drag $[N]$',fontsize=10)
+            self.ax[i].set_ylim(min(self.dragz)-3,max(self.dragz)*1.1)
+            self.ax[i].plot(self.time,self.dragz)
         elif witch == 'Drag':
             self.ax[i].set_ylabel(r'drag $[N]$',fontsize=10)
             self.ax[i].set_ylim(-3,max(self.drag)*1.1)
             self.ax[i].plot(self.time,self.drag)
+        elif witch == 'Windx':
+            self.ax[i].set_ylabel(r'Windx $[N]$',fontsize=10)
+            self.ax[i].set_ylim(min(self.windx)-3,max(self.windx)*1.1)
+            self.ax[i].plot(self.time,self.windx)
+        elif witch == 'Windy':
+            self.ax[i].set_ylabel(r'Windy $[N]$',fontsize=10)
+            self.ax[i].set_ylim(min(self.windy)-3,max(self.windy)*1.1)
+            self.ax[i].plot(self.time,self.windy)
+        elif witch == 'Windz':
+            self.ax[i].set_ylabel(r'Windz $[N]$',fontsize=10)
+            self.ax[i].set_ylim(min(self.windz)-3,max(self.windz)*1.1)
+            self.ax[i].plot(self.time,self.windz)
+        elif witch == 'Wind':
+            self.ax[i].set_ylabel(r'Wind $[N]$',fontsize=10)
+            self.ax[i].set_ylim(-3,max(self.wind)*1.1)
+            self.ax[i].plot(self.time,self.wind)
         else:
             self.ax[i].text(3.5,0.5,r'$Check$'+' '+ r'$Variable$'+' '+r'$Name$'+f'\n : {witch}',fontsize=15)
 
@@ -198,29 +239,40 @@ class Visualizer:
             index = len(self.rocket.accellist)-1
 
         self.ax.clear()
-        self.ax.set_xlim(0, 500)
-        self.ax.set_ylim(0, 500)
-        self.ax.set_zlim(0, 500)
+        self.ax.set_xlim(0, 300)
+        self.ax.set_ylim(0, 300)
+        self.ax.set_zlim(0, 300)
         self.ax.grid(False)
 
-        self.ax.set_xticks([])
-        self.ax.set_yticks([])
-        self.ax.set_zticks([])
+        # self.ax.set_xticks([])
+        # self.ax.set_yticks([])
+        # self.ax.set_zticks([])
 
-        M = Transformer().body_to_earth(self.rocket.anglelist[index,:])
-        v = 50*M@[1,0,0]
+        Dx,Dy,Dz = 5*self.rocket.totalDraglist[index,:]
+        Nx,Ny,Nz = 20*self.rocket.normallist[index,:]
+        Vx,Vy,Vz = self.rocket.velocitylist[index,:]
 
-        mc = self.rocket.positionlist[index,:] + 50*M@[self.rocket.massCenterlist[index],0,0]
-        l = mc-v
+        v = 50*self.rocket.headlist[index,:]
+        mc = self.rocket.positionlist[index,:]
 
-        self.ax.plot(self.rocket.positionlist[:index,1],self.rocket.positionlist[:index,2],self.rocket.positionlist[:index,0],'b-',label = '1st')   
+        self.ax.plot(self.rocket.positionlist[:index,2],self.rocket.positionlist[:index,1],self.rocket.positionlist[:index,0],'b-',label = '1st')   
+        self.ax.quiver(mc[2],mc[1],mc[0],Dz,Dy,Dx, color='r',lw = 2,arrow_length_ratio=0.2)
+        self.ax.quiver(mc[2],mc[1],mc[0],Nz,Ny,Nx, color='g',lw = 2,arrow_length_ratio=0.2)
+        self.ax.quiver(mc[2],mc[1],mc[0],Vz,Vy,Vx, color='y',lw = 2,arrow_length_ratio=0.2)
+        
+        self.ax.text(100,200,300,'Blue : Trajectory',color='b')
+        self.ax.text(100,200,270,'Red : Drag',color='r') 
+        self.ax.text(100,200,240,'Yellow : Velocity',color='y')                                                          # plot time
+        self.ax.text(100,200,210,'Greed : Rotation vector',color='g')
 
-        self.ax.text(100,100,100,'Time = %.2fs'%(index*self.timestep/self.time_scale))                                                           # plot time
-        self.ax.text(100,100,250,'Altitude = %.1fm'%self.rocket.positionlist[index,0])
-        self.ax.text(100,100,300,'Apogee = %.1fm'%max(self.rocket.positionlist[:,0]))
-        self.ax.text(100,100,200,'Velocity = %.1fm/s'%np.linalg.norm(self.rocket.velocitylist[index]))
-        self.ax.text(100,100,150,'Thrust = %.1fN'%self.rocket.thrustlist[index,0])
+        self.ax.text(100,200,150,'Time = %.2fs'%(index*self.timestep/self.time_scale))                                                           # plot time
+        self.ax.text(100,200,180,'Position= %.2f,%.2f,%.2f'%(self.rocket.positionlist[index,2],self.rocket.positionlist[index,1],self.rocket.positionlist[index,0]))
+        
+        # self.ax.text(100,100,300,'Apogee = %.1fm'%max(self.rocket.positionlist[:,0]))
+        # self.ax.text(100,100,200,'Velocity = %.1fm/s'%np.linalg.norm(self.rocket.velocitylist[index]))
+        # self.ax.text(100,100,150,'Thrust = %.1fN'%self.rocket.thrustlist[index,0])
+        # self.ax.text(100,100,50,r'Wind [%.2f, %.2f, %.2f] $m/s$'%(self.windx[index],self.windy[index],self.windz[index]))
 
 
-        return self.ax.quiver(l[1],l[2],l[0],v[1],v[2],v[0], color='k',lw = 2,arrow_length_ratio=0.2) 
+        return self.ax.quiver((mc-v/2)[2],(mc-v/2)[1],(mc-v/2)[0],v[2],v[1],v[0], color='k',lw = 2,arrow_length_ratio=0.2) 
      

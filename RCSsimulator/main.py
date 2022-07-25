@@ -13,16 +13,17 @@ if __name__ == '__main__':
 
   # Simulation Time (sec)
   simTime = 20
-  timestep = 0.001
+  timestep = 0.01
 
   # Simulation
   rocket.launch(environment = Environment(),timestep = timestep, simTime = simTime)
 
   # Visualization
   # which = ['Vx','Vy','Vz','V','Ax','Ay','Az','A','roll','pitch','yaw','','Wx','Wy','Wz','','Mass','Thrust','Drag']
-  # which = ['Vz','Az','yaw','Wz']
+  # which = ['roll','pitch','yaw','Windx','Windy','Windz','Dragx','Dragy','Dragz']
+  # which = ['Vx','Vy','Vz','Ax','Ay','Az']
   which = '3d'
-  Visualizer(rocket,simTime,timestep,which)
+  Visualizer(rocket,simTime,timestep,which,scale=10)
 
   '''
     witch :
@@ -37,7 +38,11 @@ if __name__ == '__main__':
      roll pitch yaw
      Wx   Wy   Wz
 
-     Mass Thrust Drag
+     Mass Thrust
+
+     Dragx Dragy Dragz Drag
+
+     Windx Windy Windz Wind
 
      (Everything you choose)
 
