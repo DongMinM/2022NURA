@@ -230,8 +230,8 @@ class Visualizer:
         self.ax = fig.add_subplot(111,projection='3d')
 
         animate = animation.FuncAnimation(fig,self.animate, frames = int((simTime)/self.timestep+2), interval=1)
-        # plt.show()
-        animate.save('Simulation.mp4',fps=20)
+        plt.show()
+        # animate.save('Simulation.mp4',fps=20)
 
     # Set animation
     def animate(self,i):
