@@ -277,7 +277,7 @@ class Visualizer:
         self.ax.text(100,400,280,r'Position= %.1f,%.1f,%.1f $[m/s]$'%(self.rocket.positionlist[index,2],self.rocket.positionlist[index,1],self.rocket.positionlist[index,0]))
 
         self.ax.text(100,400,200,'Pitch = %.2f \u2070'%(self.rocket.pitchlist[index]*180/np.pi)) 
-        self.ax.text(100,400,170,'Yaw = %.2f \u2079'%(self.rocket.philist[index]*180/np.pi)) 
+        self.ax.text(100,400,170,'Yaw = %.2f \u2070'%(self.rocket.yawlist[index]*180/np.pi)) 
 
         # self.ax.text(100,100,300,'Apogee = %.1fm'%max(self.rocket.positionlist[:,0]))
         # self.ax.text(100,100,200,'Velocity = %.1fm/s'%np.linalg.norm(self.rocket.velocitylist[index]))
