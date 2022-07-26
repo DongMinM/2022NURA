@@ -19,24 +19,26 @@ class RocketStatus:
     self.velocity     = np.array([0,0,0])         # m/s
     self.acceleration = np.array([0,0,0])         # m/s^2
 
-    self.angle               = np.array([0,0,0])*np.pi/180  # ras
-    self.angulerVelocity     = np.array([0,0,0])*np.pi/180   # rad / s
-    self.angulerAcceleration = np.array([0,0,0])*np.pi/180   # rad / s^2
-
-
-    self.theta = np.array([60])*np.pi/180
+    self.theta = np.array([90])*np.pi/180
 
     # 롤축(x축)으로부터의 각도
-    self.phi = np.array([30])*np.pi/180
+    self.phi = np.array([10])*np.pi/180
 
     rho = self.length - self.massCenter
+
     self.head = np.array([(rho*np.sin(self.theta)*np.cos(self.phi))[0],
                           (rho*np.sin(self.theta)*np.sin(self.phi))[0],
                           (rho*np.cos(self.theta))[0]])
+
     self.head = np.around(self.head,10)
+
+    self.pitch = np.arctan2(self.head[1],self.head[2])
+    self.yaw   = np.arctan2(self.head[0],self.head[2])
 
     self.thrust   = np.array([100,0,0])                      # x,y,z thrust in rocket inertia frame
     self.burnTime = 3                             # sec
+
+    self.thrust_ground = Transformer().spherical_to_earth(np.linalg.norm(self.thrust),self.theta,self.phi)
 
     self.structureMass  = 3                       # kg
     self.propellantMass = 0.5                     # kg

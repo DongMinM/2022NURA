@@ -2,14 +2,14 @@ from Visualization import Visualizer
 from environment import Environment
 from rocketStatus import RocketStatus
 from rcsThruster import RCS
-from rocket import Rocket
+from rocketLauncher import Rocket_launcher
 
 
 if __name__ == '__main__':
 
   rocketStatus = RocketStatus()
   rcs_thruster = RCS()
-  rocket = Rocket(rocketStatus, rcs_thruster)
+  rocket = Rocket_launcher(rocketStatus, rcs_thruster)
 
   # Simulation Time (sec)
   simTime = 20
@@ -21,12 +21,12 @@ if __name__ == '__main__':
   # Visualization
   # which = ['Vx','Vy','Vz','V','Ax','Ay','Az','A','roll','pitch','yaw','','Wx','Wy','Wz','','Mass','Thrust','Drag']
   # which = ['roll','pitch','yaw','Windx','Windy','Windz','Dragx','Dragy','Dragz']
-  # which = ['Vx','Vy','Vz','Ax','Ay','Az']
+  # which = ['Vx','Vy','Vz','pitch','yaw']
   which = '3d'
   Visualizer(rocket,simTime,timestep,which,scale=10)
 
   '''
-    which :
+    witch :
 
      3d
 

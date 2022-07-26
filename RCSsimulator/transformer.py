@@ -6,9 +6,9 @@ class Transformer:
 
   def spherical_to_earth(self, rho, theta, phi):
 
-    earth_pos = np.array([(rho*np.sin(theta)*np.cos(phi))[0],
-                          (rho*np.sin(theta)*np.sin(phi))[0],
-                          (rho*np.cos(theta))[0]])
+    earth_pos = np.array([(rho*np.sin(theta[0])*np.cos(phi[0])),
+                          (rho*np.sin(theta[0])*np.sin(phi[0])),
+                          (rho*np.cos(theta[0]))])
 
     return earth_pos
 

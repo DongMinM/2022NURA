@@ -12,6 +12,8 @@ class Environment:
     # self.wind  = np.around(np.random.randn(3),3)
     self.wind = np.array([0,0,0])
     self.Cw = 1
+    self.sec_Time = 0
+
   # Kinematics
   def free_fall(self,rocket,dt):
 
@@ -69,15 +71,41 @@ class Environment:
 
         # Calculate thrust and transform thrust
         T = Transformer().spherical_to_earth(T,theta,phi)
+        
+        left_rcs = 0
+        if rocket.status.position[0] >= 100:
+            if rocket.status.pitch*180/np.pi > 0:
+                left_rcs = 3
+            elif rocket.status.pitch*180/np.pi <-0:
+                left_rcs = -3
+            else:
+                left_rcs = 0
+
+        if rocket.status.position[0] > 100 and rocket.status.velocity[0] < 0 and self.sec_Time == 0:
+            T = 100
+            T = Transformer().spherical_to_earth(T,theta,phi)
+            self.sec_Time += dt
+        
+        if self.sec_Time != 0:
+            T = 20
+            T = Transformer().spherical_to_earth(T,theta,phi)
+            self.sec_Time += dt
+
+        if self.sec_Time > 10:
+            T = np.array([0,0,0])
+
+
+        l_T = Transformer().spherical_to_earth(left_rcs,theta,phi-0.5*np.pi)
+        # l_T = Transformer().quaternions_rotation(head,0.5*np.pi,l_T)
 
         # Calculate drag and transform drag
         D = -0.5*rho*S*Cd*np.linalg.norm(p_v[3:6])*np.array(p_v[3:6])
         
         # Total force at aerocenter
-        total_force_at_ac = D
+        total_force_at_ac = D - l_T
 
         # Calculate total acceleration
-        total_accel = (T+D)/m-self.g
+        total_accel = (T+D+l_T)/m-self.g
 
         # State-space equation : Translation
         p_v = A@p_v + B@total_accel
@@ -109,7 +137,12 @@ class Environment:
         rocket.status.phi         = np.array([np.arctan2(rocket.status.head[1],rocket.status.head[0])])
         rocket.status.theta       = np.array([90*np.pi/180-rocket.status.head[2]/np.linalg.norm(rocket.status.head)])
 
+        if head[0] != 0:
+            rocket.status.pitch = np.arctan2(head[1],head[0])
+            rocket.status.yaw   = np.arctan2(head[2],head[0])
 
+        rocket.status.thrust_ground             = T
+        rocket.rcs.left_thrust    = l_T
         
 
 
