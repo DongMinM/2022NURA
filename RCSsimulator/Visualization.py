@@ -54,13 +54,6 @@ class Visualizer:
             self.drag[i] = np.linalg.norm(rocket.totalDraglist[i])
         self.time = rocket.timeFlowList
 
-        self.windx = rocket.windlist[:,1]
-        self.windy = rocket.windlist[:,2]
-        self.windz = rocket.windlist[:,0]
-        self.wind   = np.empty(len(rocket.windlist))
-        for i in range(len(rocket.windlist)):
-            self.drag[i] = np.linalg.norm(rocket.windlist[i])
-
         self.landingTime = rocket.landingTime
 
 
@@ -249,7 +242,7 @@ class Visualizer:
         # self.ax.set_yticks([])
         # self.ax.set_zticks([])
 
-        self.ax.view_init(elev=0, azim=179)
+        # self.ax.view_init(elev=0, azim=179)
 
         Tx,Ty,Tz = self.rocket.thrustgroundlist[index,:]
         Dx,Dy,Dz = 5*self.rocket.totalDraglist[index,:]
@@ -274,7 +267,7 @@ class Visualizer:
         self.ax.text(100,400,310,'Red : Thrust',color='r')
 
         self.ax.text(100,400,250,'Time = %.2fs'%(index*self.timestep/self.time_scale))                                                           # plot time
-        self.ax.text(100,400,280,r'Position= %.1f,%.1f,%.1f $[m/s]$'%(self.rocket.positionlist[index,2],self.rocket.positionlist[index,1],self.rocket.positionlist[index,0]))
+        self.ax.text(100,400,280,r'Position= %.1f,%.1f,%.1f $[m]$'%(self.rocket.positionlist[index,2],self.rocket.positionlist[index,1],self.rocket.positionlist[index,0]))
 
         self.ax.text(100,400,200,'Pitch = %.2f \u2070'%(self.rocket.pitchlist[index]*180/np.pi)) 
         self.ax.text(100,400,170,'Yaw = %.2f \u2070'%(self.rocket.yawlist[index]*180/np.pi)) 

@@ -2,23 +2,23 @@ from Visualization import Visualizer
 from environment import Environment
 from rocketStatus import RocketStatus
 from rcsThruster import RCS
-from rocketLauncher import Rocket_launcher
+from rocket import Rocket
 
 
 if __name__ == '__main__':
 
   rocketStatus = RocketStatus()
   rcs_thruster = RCS()
-  rocket = Rocket_launcher(rocketStatus, rcs_thruster)
+  rocket = Rocket(rocketStatus, rcs_thruster)
 
-  # Simulation Time (sec)
+  # 시뮬레이션 시간
   simTime = 20
   timestep = 0.01
 
-  # Simulation
+  # Start
   rocket.launch(environment = Environment(),timestep = timestep, simTime = simTime)
 
-  # Visualization
+  # 시각화
   # which = ['Vx','Vy','Vz','V','Ax','Ay','Az','A','roll','pitch','yaw','','Wx','Wy','Wz','','Mass','Thrust','Drag']
   # which = ['roll','pitch','yaw','Windx','Windy','Windz','Dragx','Dragy','Dragz']
   # which = ['Vx','Vy','Vz','pitch','yaw']

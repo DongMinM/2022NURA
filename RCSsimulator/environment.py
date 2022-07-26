@@ -6,43 +6,48 @@ import time
 
 class Environment:
   def __init__ (self):
-    np.random.seed(2)
-    # gravity
+
+    # 중력
     self.g     = np.array([9.81,0,0])                # m / s^2
-    # self.wind  = np.around(np.random.randn(3),3)
+
+    # 바람
     self.wind = np.array([0,0,0])
-    self.Cw = 1
+
     self.sec_Time = 0
 
-  # Kinematics
+  # 낙하
   def free_fall(self,rocket,dt):
 
         ''' Set Parameters'''
-        # Thrust
+
+        # 추력 불러오기
         T = np.linalg.norm(rocket.status.thrust)
-        # position and velocity about ground
+
+        # 위치, 속도 불러오기
         p_v = np.append(rocket.status.position,rocket.status.velocity)
 
-        # mass
+        # 질량 불러오기
         m = rocket.status.structureMass + rocket.status.propellantMass
+        # 헤드 방향 불러오기
         head = rocket.status.head
+        # 구면 좌표 각 불러오기
         theta = rocket.status.theta
         phi   = rocket.status.phi
-        # inertia
+        # 관성 모멘트 계산
         I = np.around(0.5*m*rocket.status.length**2,5)
 
-        # drag coefficient
+        # 항력 계수 불러오기
         Cd = rocket.status.dragCoeff
-        # cross section
+        # 단면적 계산
         S = np.pi*rocket.status.diameter**2/4
         
-        # rho
+        # 대기 밀도 계산
         if p_v[2] <= 35000:
             rho = 1.225*(1-1.8e-5*p_v[2])**5.656                                  ## calculate atmospheric density
         else :
             rho = 0.001
 
-        # Kinematics / X = A@X + B@U / Kinetics / X = A@X + B@U
+        # 상태 공간 방정식 / X = A@X + B@U
         ''' |x |      |1, 0, 0, dt ,0 ,0||x |     |0.5*dt**2, 0,           0|
             |y |      |0, 1, 0, 0, dt ,0||y |     |0,         0.5*dt**2,   0||ax|
             |z |  =   |0, 0, 1, 0, 0, dt||z |  +  |0,         0,   0.5*dt**2||ay|
@@ -52,8 +57,6 @@ class Environment:
             p_v = A@p_v + B@a
 
         '''
-        
-
 
         A = np.array([[1, 0, 0, dt ,0 ,0],
                       [0, 1, 0, 0, dt ,0],
@@ -69,9 +72,10 @@ class Environment:
                       [0,         dt,        0],
                       [0,         0,         dt]])
 
-        # Calculate thrust and transform thrust
+        # 추력 구면좌표 -> 직교 좌표 변환
         T = Transformer().spherical_to_earth(T,theta,phi)
         
+        # RCS 작동 조건 설정
         left_rcs = 0
         if rocket.status.position[0] >= 100:
             if rocket.status.pitch*180/np.pi > 0:
@@ -80,7 +84,9 @@ class Environment:
                 left_rcs = -3
             else:
                 left_rcs = 0
+        l_T = Transformer().spherical_to_earth(left_rcs,theta,phi-0.5*np.pi)
 
+        # 재점화 설정
         if rocket.status.position[0] > 100 and rocket.status.velocity[0] < 0 and self.sec_Time == 0:
             T = 100
             T = Transformer().spherical_to_earth(T,theta,phi)
@@ -94,20 +100,16 @@ class Environment:
         if self.sec_Time > 10:
             T = np.array([0,0,0])
 
-
-        l_T = Transformer().spherical_to_earth(left_rcs,theta,phi-0.5*np.pi)
-        # l_T = Transformer().quaternions_rotation(head,0.5*np.pi,l_T)
-
-        # Calculate drag and transform drag
+        # 속도에 의한 항력 계산
         D = -0.5*rho*S*Cd*np.linalg.norm(p_v[3:6])*np.array(p_v[3:6])
         
-        # Total force at aerocenter
+        # 공력 중심에 작용하는 총 항력(힘o 토크x) 계산
         total_force_at_ac = D - l_T
 
-        # Calculate total acceleration
+        # 무게 중심에 작용하는 총 힘 계산
         total_accel = (T+D+l_T)/m-self.g
 
-        # State-space equation : Translation
+        # 상태 공간 방정식 (Translation)
         p_v = A@p_v + B@total_accel
 
         # Rotation equation
@@ -125,10 +127,12 @@ class Environment:
             rocket.status.head             = next_head
 
 
-        if rocket.timeFlow <= 3:
+        # 추진 중 추진제 감소
+        if rocket.timeFlow <= rocket.status.burnTime:
             rocket.status.propellantMass  -= rocket.status.burnratio*dt
 
-        # Update status
+
+        # 상태 업데이트
         rocket.status.position         = p_v[0:3]
         rocket.status.velocity         = p_v[3:6]
         rocket.status.acceleration     = total_accel
